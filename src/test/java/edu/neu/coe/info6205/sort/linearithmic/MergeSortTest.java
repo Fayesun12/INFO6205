@@ -10,6 +10,7 @@ import edu.neu.coe.info6205.util.Config;
 import edu.neu.coe.info6205.util.LazyLogger;
 import edu.neu.coe.info6205.util.PrivateMethodTester;
 import edu.neu.coe.info6205.util.StatPack;
+import edu.neu.coe.info6205.util.Benchmark_Timer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -386,6 +387,78 @@ public class MergeSortTest {
         Integer[] sorted = sorter.sort(ints);
         assertTrue(helper.sorted(sorted));
     }
+
+
+    @Test
+    public void instrumention() {
+        System.out.println("Instrumentation:");
+
+        Config conA = config.copy("helper", "instrument", "true");
+        Config conB = conA.copy(MergeSort.MERGESORT, MergeSort.INSURANCE, "true");
+        Config conC = conB.copy(MergeSort.MERGESORT, MergeSort.NOCOPY, "true");
+
+        for(int n = 10000; n <= 256000; n *= 2) {
+            if(n == 160000) n = 128000;
+
+            final Helper<Integer> integerHelper = HelperFactory.create("MergeSort", n, conC);
+            Sort<Integer> mergeSort = new MergeSort<>(integerHelper);
+            mergeSort.init(n);
+            int finalN = n;
+            final Integer[] integers = integerHelper.random(Integer.class, r -> r.nextInt(finalN));
+            integerHelper.preProcess(integers);
+            Integer[] integers1 = mergeSort.sort(integers);
+            integerHelper.postProcess(integers1);
+            final PrivateMethodTester tester = new PrivateMethodTester(integerHelper);
+            final StatPack getStatPack = (StatPack) tester.invokePrivate("getStatPack");
+
+
+            final int compares = (int) getStatPack.getStatistics(InstrumentedHelper.COMPARES).mean();
+            final int inversions = (int) getStatPack.getStatistics(InstrumentedHelper.INVERSIONS).mean();
+            final int fixes = (int) getStatPack.getStatistics(InstrumentedHelper.FIXES).mean();
+            final int swaps = (int) getStatPack.getStatistics(InstrumentedHelper.SWAPS).mean();
+            final int copies = (int) getStatPack.getStatistics(InstrumentedHelper.COPIES).mean();
+            final int hits = (int) getStatPack.getStatistics(InstrumentedHelper.HITS).mean();
+
+            System.out.println("N :" + n);
+            System.out.println("Compares: " + compares + "Copies: " + copies +"Swaps: " + swaps + "Inversions : " + inversions + "Fixes: " + fixes + "Hits: " + hits);
+            System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+
+
+        }
+    }
+
+    @Test
+    public void timing() {
+        System.out.println("Timing :");
+
+        Config conA = config.copy(MergeSort.MERGESORT, MergeSort.INSURANCE, "true");
+
+        Config conB = conA.copy(MergeSort.MERGESORT, MergeSort.NOCOPY, "true");
+
+        for(int n = 10000, m = 100; n <= 256000; n *= 2) {
+            if(n == 160000) n = 128000;
+
+            Benchmark_Timer<Integer> benchmark_timer = new Benchmark_Timer<>(
+                    "MergeSort",
+                    null,
+                    (Integer N) -> {
+                        MergeSort<Integer> mergeSort = new MergeSort<>(N, conB);
+                        Helper<Integer> help = mergeSort.getHelper();
+                        Integer[] random = help.random(Integer.class, r -> r.nextInt(N));
+                        Integer[] mergeS = mergeSort.sort(random);
+                        assertTrue(help.sorted(mergeS));
+                    },
+                    null
+            );
+
+            double timer = benchmark_timer.run(n, m);
+            System.out.println("N: : " + n + " -> " + timer + "ms.");
+
+
+        }
+
+    }
+
 
     final static LazyLogger logger = new LazyLogger(MergeSort.class);
 

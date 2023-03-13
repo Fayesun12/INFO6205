@@ -2,8 +2,12 @@
  * Copyright (c) 2018. Phasmid Software
  */
 
+
 package edu.neu.coe.info6205.util;
 
+import edu.neu.coe.info6205.sort.elementary.InsertionSort;
+
+import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -125,4 +129,72 @@ public class Benchmark_Timer<T> implements Benchmark<T> {
     private final Consumer<T> fPost;
 
     final static LazyLogger logger = new LazyLogger(Benchmark_Timer.class);
+    public static void main(String[] args) {
+        int m = 500;
+        Random random = new Random();
+        System.out.println("~~~~~~~~~~~~~~~~~");
+        System.out.println("1.random");
+        System.out.println("~~~~~~~~~~~~~~~~~");
+        for (int n = 1000; n < 20000; n = n * 2) {
+            InsertionSort<Integer> insertSort = new InsertionSort<>();
+            Consumer<Integer[]> consumer = array -> insertSort.sort(array, 0, array.length);
+            Benchmark_Timer<Integer[]> benchmarkTimer = new Benchmark_Timer<>("InsertionSort for Random Ordered Array: " + n, consumer);
+
+            Integer[] array = new Integer[n];
+            for (int i = 0; i < n; i++)
+                array[i] = random.nextInt();
+
+            consumer.accept(array);
+            System.out.println(benchmarkTimer.run(array, m));
+        }
+
+        System.out.println("~~~~~~~~~~~~~~~~~");
+        System.out.println("2.ordered");
+        System.out.println("~~~~~~~~~~~~~~~~~");
+        for (int n = 1000; n < 20000; n = n * 2) {
+            InsertionSort<Integer> insertSort = new InsertionSort<>();
+            Consumer<Integer[]> consumer = array -> insertSort.sort(array, 0, array.length);
+            Benchmark_Timer<Integer[]> benchmarkTimer = new Benchmark_Timer<>("InsertionSort for Ordered Array: " + n, consumer);
+
+            Integer[] array = new Integer[n];
+            for (int i = 0; i < n; i++)
+                array[i] = i;
+
+            consumer.accept(array);
+            System.out.println(benchmarkTimer.run(array, m));
+        }
+
+        System.out.println("~~~~~~~~~~~~~~~~~");
+        System.out.println("3.reverse-ordered");
+        System.out.println("~~~~~~~~~~~~~~~~~");
+        for (int n = 1000; n < 20000; n = n * 2) {
+            InsertionSort<Integer> insertSort = new InsertionSort<>();
+            Consumer<Integer[]> consumer = array -> insertSort.sort(array, 0, array.length);
+            Benchmark_Timer<Integer[]> benchmarkTimer = new Benchmark_Timer<>("InsertionSort for Reverse Ordered Array: " + n, consumer);
+
+            Integer[] array = new Integer[n];
+            for (int i = n - 1; i >= 0; i--)
+                array[i] = i;
+
+            consumer.accept(array);
+            System.out.println(benchmarkTimer.run(array, m));
+        }
+
+        System.out.println("~~~~~~~~~~~~~~~~~");
+        System.out.println("4.partially-ordered");
+        System.out.println("~~~~~~~~~~~~~~~~~");
+        for (int n = 1000; n < 20000; n = n * 2) {
+            InsertionSort<Integer> insertSort = new InsertionSort<>();
+            Consumer<Integer[]> consumer = array -> insertSort.sort(array, 0, array.length);
+            Benchmark_Timer<Integer[]> benchmarkTimer = new Benchmark_Timer<>("InsertionSort for Partially Ordered Array: " + n, consumer);
+
+            Integer[] array = new Integer[n];
+            for (int i = 0; i < n/2; i++)
+                array[i] = i;
+            for (int j = n - 1 ; j >= n/2; j--)
+                array[j] = j;
+            consumer.accept(array);
+            System.out.println(benchmarkTimer.run(array, m));
+        }
+    }
 }
