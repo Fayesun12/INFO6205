@@ -7,11 +7,6 @@ import edu.neu.coe.info6205.util.Config;
 
 import java.util.Arrays;
 
-/**
- * Class MergeSort.
- *
- * @param <X> the underlying comparable type.
- */
 public class MergeSort<X extends Comparable<X>> extends SortWithHelper<X> {
 
     public static final String DESCRIPTION = "MergeSort";
@@ -65,7 +60,31 @@ public class MergeSort<X extends Comparable<X>> extends SortWithHelper<X> {
         }
 
         // FIXME : implement merge sort with insurance and no-copy optimizations
-        // END 
+        if(from >= to) return;
+        int pivot = from + (to - from) / 2;
+
+        if(noCopy) {
+            sort(aux, a, from, pivot);
+            sort(aux, a, pivot, to);
+
+            if(insurance && helper.less(aux, pivot - 1, pivot)) {
+
+                for(int i = from; i < to; i++) a[i] = aux[i];
+                return;
+
+            }
+            merge(aux, a, from, pivot, to);
+        }
+        else {
+            sort(a, aux, from, pivot);
+            sort(a, aux, pivot, to);
+
+            if (insurance && helper.less(a[pivot - 1], a[pivot])) return;
+
+            for (int i = from; i < to; i++) aux[i] = a[i];
+            merge(aux, a, from, pivot, to);
+        }
+        // END
     }
 
     // CONSIDER combine with MergeSortBasic perhaps.

@@ -9,6 +9,8 @@ import edu.neu.coe.info6205.util.Config;
 import edu.neu.coe.info6205.util.LazyLogger;
 import edu.neu.coe.info6205.util.PrivateMethodTester;
 import edu.neu.coe.info6205.util.StatPack;
+import java.util.Random;
+import edu.neu.coe.info6205.util.Benchmark_Timer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -315,6 +317,81 @@ public class QuickSortDualPivotTest {
     public static void beforeClass() throws IOException {
         config = Config.load();
     }
+
+    @Test
+    public void timing() {
+        System.out.println("Timing;");
+
+        for(int n = 10000, m = 100; n <= 256000; n *= 2) {
+            if(n == 160000) n = 128000;
+
+            Benchmark_Timer<Integer> benchmark_timer = new Benchmark_Timer<>(
+                    "QuickSort Dual Pivots",
+                    null,
+                    (Integer N) -> {
+                        SortWithHelper<Integer> sortWithHelper = new QuickSort_DualPivot<>(N, config);
+                        Helper<Integer> helper = sortWithHelper.getHelper();
+                        Integer[] random = helper.random(Integer.class, r -> r.nextInt(N));
+                        Integer[] integers = sortWithHelper.sort(random);
+                        assertTrue(helper.sorted(integers));
+                    },
+                    null
+            );
+
+            double timer = benchmark_timer.run(n, m);
+            System.out.println(":N " + n + " -> " + timer + "ms");
+
+
+        }
+
+    }
+    @Test
+    public void instrumention() {
+        System.out.println("Instrumention");
+
+        Config conA = Config.setupConfig("true", "0", "1", "", "");
+
+        for(int n = 10000; n <= 256000; n *= 2) {
+            if(n == 160000) n = 128000;
+
+            final BaseHelper<Integer> baseHelper = (BaseHelper<Integer>) HelperFactory.create("QuickSort Dual Pivots", n, conA);
+            System.out.println(baseHelper);
+            Sort<Integer> sort = new QuickSort_DualPivot<>(baseHelper);
+            sort.init(n);
+            int finalN = n;
+
+            final Integer[] random = baseHelper.random(Integer.class, r -> r.nextInt(finalN));
+            baseHelper.preProcess(random);
+            Integer[] xs = sort.sort(random);
+            assertTrue(baseHelper.sorted(xs));
+            baseHelper.postProcess(xs);
+
+            final PrivateMethodTester tester = new PrivateMethodTester(baseHelper);
+            final StatPack getStatPack = (StatPack) tester.invokePrivate("getStatPack");
+
+            System.out.println("N :" + n);
+            final int compares = (int) getStatPack.getStatistics(InstrumentedHelper.COMPARES).mean();
+            final int inversions = (int) getStatPack.getStatistics(InstrumentedHelper.INVERSIONS).mean();
+            final int fixes = (int) getStatPack.getStatistics(InstrumentedHelper.FIXES).mean();
+            final int swaps = (int) getStatPack.getStatistics(InstrumentedHelper.SWAPS).mean();
+            final int copies = (int) getStatPack.getStatistics(InstrumentedHelper.COPIES).mean();
+            final int hits = (int) getStatPack.getStatistics(InstrumentedHelper.HITS).mean();
+
+            System.out.println("Compares: " + compares + "Copies: " + copies +"Swaps: " + swaps + "Inversions : " + inversions + "Fixes: " + fixes + "Hits: " + hits);
+            System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+
+
+
+        }
+    }
+
+    private static Integer[] NewArray(int n) {
+        Random random = new Random();
+        Integer[] integers = new Integer[n];
+        for(int i = 0; i < n; i++) {
+            integers[i] = random.nextInt(n);
+        }
+        return integers;}
 
     private static Config config;
 }
